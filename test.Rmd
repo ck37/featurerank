@@ -76,6 +76,53 @@ This should be one or more was of aggregating multiple feature ranking algorithm
 
 ```{r fn_aggregation}
 # TODO: reciprocal ranking
+agg_reciprocal_rank = function(rank_df) {
+  # For each feature, sum the inverse of its ranks, then invert the sum.
+  ranks = apply(rank_df, MARGIN = 1, function(row) {
+     1 / sum(row^-1)
+  })
+  return(rank(ranks))
+}
+
+# Give it a ranking of multiple algorithms, and it will return the overall ranking.
+agg_reciprocal_rank(rank_df)
+```
+
+## Overall wrapper
+
+```{r wrapper_overall}
+# Specify the data, feature ranking wrappers, aggregation wrapper, and the number
+# of features to select.
+
+ensemble_rank =
+  function(Y, X, family,
+           # Feature ranking algorithms.
+           fn_rank = c(featrank_cor, featrank_randomForest),
+           # Rank aggregation algorithm.
+           fn_agg = agg_reciprocal_rank,
+           # How many variables we want to select.
+           top_vars = ceiling(ncol(X) / 2),
+           # Not used.
+           ...)  {
+    
+    # Run each feature ranking algorithm.
+    cat("Run each feature ranking algorithm\n")
+    rank_df = do.call(cbind.data.frame,
+                      lapply(fn_rank, Y, X, family))
+    
+    cat("Calculate the aggregate ranking.\n")
+    ranking = fn_agg(rank_df)
+    
+    # Apply the ranking to select the top X variables.
+    whichVariable <- (ranking <= top_vars)
+    return(whichVariable)
+  }
+
+featrank_randomForest10 =  function(...) featrank_randomForest(ntree = 10, ...)
+
+
+(result = ensemble_rank(y, x, family, fn_rank = c(featrank_cor, featrank_randomForest10)))
+
 
 ```
 
