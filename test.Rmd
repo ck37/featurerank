@@ -1,0 +1,61 @@
+---
+title: "test"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ck37r)
+library(SuperLearner)
+```
+
+
+## Data prep
+
+```{r tests}
+
+# TODO: switch to a less problematic demo dataset.
+data(Boston, package = "MASS")
+
+set.seed(1, "L'Ecuyer-CMRG")
+
+# Subset rows to speed up example computation.
+row_subset = sample(nrow(Boston), 200)
+
+Boston = Boston[row_subset, ]
+
+# Use "chas" as our outcome variable, which is binary.
+x = subset(Boston, select = -chas)
+
+```
+
+## Feature ranking wrappers
+
+TODO
+
+* look at Sara Moore's feature selection repo for more ideas.
+* Also Ron's email about additional feature selection algorithms to try, e.g. from the main paper
+
+```{r fn_feature_ranking}
+# TODO:
+# univariate correlation
+# glm
+# RF
+```
+
+## Aggregation wrappers
+
+```{r fn_aggregation}
+# TODO: reciprocal ranking
+
+```
+
+## Test SuperLearner
+
+```{r test_sl}
+# TODO: revise this.
+sl = SuperLearner(Boston$chas, X[, 1:3], family = binomial(),
+                  cvControl = list(V = 2L, stratifyCV = TRUE),
+                  SL.library = c("SL.mean", "SL.glm"))
+```

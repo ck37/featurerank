@@ -1,0 +1,19 @@
+---
+output: github_document
+
+# Via https://bookdown.org/yihui/bookdown/citations.html
+biblio-style: "apalike"
+bibliography: references.bib 
+link-citations: true
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# Feature ranking ensemble
+
+We are attempting to implement @effrosynidis2021evaluation's ensemble feature selection method for use in SuperLearner ensembles.
+
+## References
+
+<div id="refs"></div>
+
