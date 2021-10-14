@@ -106,11 +106,10 @@ ensemble_rank =
            ...)  {
     
     # Run each feature ranking algorithm.
-    cat("Run each feature ranking algorithm\n")
     rank_df = do.call(cbind.data.frame,
-                      lapply(fn_rank, Y, X, family))
+                      lapply(fn_rank, function(fn) fn(Y, X, family)))
     
-    cat("Calculate the aggregate ranking.\n")
+    # Calculate the aggregate ranking.
     ranking = fn_agg(rank_df)
     
     # Apply the ranking to select the top X variables.
@@ -118,19 +117,46 @@ ensemble_rank =
     return(whichVariable)
   }
 
-featrank_randomForest10 =  function(...) featrank_randomForest(ntree = 10, ...)
+# Create a custom RF ranker that only uses 10 trees, to speed up testing.
+featrank_randomForest10 =
+  function(...) featrank_randomForest(ntree = 10, ...)
 
 
+featrank_randomForest100 =
+  function(...) featrank_randomForest(ntree = 100, ...)
+
+debugonce(ensemble_rank)
 (result = ensemble_rank(y, x, family, fn_rank = c(featrank_cor, featrank_randomForest10)))
 
-
+# Create a custom ensemble rank feature selector, using the RF learner.
+# Also could customize top_vars if desired.
+ensemble_rank_custom =
+  function(...) ensemble_rank(fn_rank = c(featrank_cor,
+                                          featrank_randomForest100),
+                              # There are 13 total vars so try dropping 1 of them.
+                              top_vars = 12,
+                              ...)
 ```
 
 ## Test SuperLearner
 
 ```{r test_sl}
-# TODO: revise this.
-sl = SuperLearner(Boston$chas, X[, 1:3], family = binomial(),
-                  cvControl = list(V = 2L, stratifyCV = TRUE),
-                  SL.library = c("SL.mean", "SL.glm"))
+# Seems to work correctly.
+sl = SuperLearner(y, x, family = binomial(),
+                  cvControl = list(V = 10L, stratifyCV = TRUE),
+                  SL.library =
+                    list("SL.mean",
+                         # Try two screening options: ensemble_rank_custom or All.
+                         c("SL.glm", "ensemble_rank_custom", "All")))
+
+# No AUC benefit, but maybe we need better/more feature rankings. Or this dataset just
+# doesn't have many noise features.
+# Plus we aren't used any complex ML algorithms like xgboost / BART / RF.
+ck37r::auc_table(sl, y = y)
+
+# Which feature was dropped in the final SL?
+names(x)[!sl$whichScreen["ensemble_rank_custom", ]]
+# Full results:
+sl$whichScreen
 ```
+
