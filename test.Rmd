@@ -6,10 +6,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+# remotes::install_github("ck37/ck37r")
 library(ck37r)
 library(SuperLearner)
-```
 
+ck37r::load_all_code("R", verbose = TRUE)
+```
 
 ## Data prep
 
@@ -27,24 +29,50 @@ Boston = Boston[row_subset, ]
 
 # Use "chas" as our outcome variable, which is binary.
 x = subset(Boston, select = -chas)
+y = Boston$chas
+family = binomial()
 
 ```
 
 ## Feature ranking wrappers
 
+Each wrapper should return a ranking of all variables that are being analyzed. They should not do any subsetting.
+
 TODO
 
-* look at Sara Moore's feature selection repo for more ideas.
+* look at Sara Moore's [feature selection repo](https://github.com/saraemoore/SLScreenExtra) for more ideas.
 * Also Ron's email about additional feature selection algorithms to try, e.g. from the main paper
+* Use tidymodels or mlr3 - do they have good feature selection/ranking options?
 
 ```{r fn_feature_ranking}
 # TODO:
-# univariate correlation
-# glm
-# RF
+# univariate correlation 
+res1 = featrank_cor(y, x, family)
+res1
+
+# random forest
+res2 = featrank_randomForest(y, x, family, ntree = 10)
+# These aren't named currently.
+res2
+
+
+# TODO: ranger
+# TODO: glm (skip? might require a ridge penalty)
+# TODO: glmnet (support ridge, lasso, and elastic net)
+# TODO: others 
+```
+
+### Integrate rankings
+
+```{r integrate_rankings}
+# Create a dataframe containing all rankings.
+rank_df = data.frame(cor = res1, rf = res2)
+rank_df
 ```
 
 ## Aggregation wrappers
+
+This should be one or more was of aggregating multiple feature ranking algorithms, and choosing a cutoff for how many variables to include.
 
 ```{r fn_aggregation}
 # TODO: reciprocal ranking
