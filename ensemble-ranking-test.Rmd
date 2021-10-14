@@ -17,6 +17,10 @@ library(SuperLearner)
 ck37r::load_all_code("R", verbose = TRUE)
 ```
 
+General to-dos:
+
+* Support observation weights.
+
 ## Data prep
 
 ```{r tests}
@@ -24,12 +28,14 @@ ck37r::load_all_code("R", verbose = TRUE)
 # TODO: switch to a less problematic demo dataset.
 data(Boston, package = "MASS")
 
-set.seed(1, "L'Ecuyer-CMRG")
+# Skip row subsetttings
+
+#set.seed(1, "L'Ecuyer-CMRG")
 
 # Subset rows to speed up example computation.
-row_subset = sample(nrow(Boston), 200)
+#row_subset = sample(nrow(Boston), 200)
 
-Boston = Boston[row_subset, ]
+#Boston = Boston[row_subset, ]
 
 # Use "chas" as our outcome variable, which is binary.
 x = subset(Boston, select = -chas)
@@ -52,13 +58,23 @@ TODO
 # Univariate correlation 
 (res1 = featrank_cor(y, x, family))
 
+# rad does have the high p-value and medv has the lowest.
+sapply(x, function(x) {
+        cor.test(x, y = y, method = "pearson")$p.value
+})
+
 # random forest
 # These aren't named currently.
 (res2 = featrank_randomForest(y, x, family, ntree = 10))
 
 
+(res3 = featrank_glm(y, x, family))
+
+# Compare to glm() manual results.
+reg = glm(y ~ ., data = x, family = binomial())
+summary(reg)
+
 # TODO: ranger - started in R/ folder.
-# TODO: glm (skip? might require a ridge penalty)
 # TODO: glmnet (support ridge, lasso, and elastic net)
 # TODO: others 
 ```
@@ -67,13 +83,15 @@ TODO
 
 ```{r integrate_rankings}
 # Create a dataframe containing all rankings.
-rank_df = data.frame(cor = res1, rf = res2)
-rank_df
+# Interestingly "rad" and "tax" have such divergent results for glm.
+(rank_df = data.frame(cor = res1, rf = res2, glm = res3))
 ```
 
 ## Aggregation wrappers
 
 This should be one or more was of aggregating multiple feature ranking algorithms into an overall ranking.
+
+### Reciprocal rank
 
 ```{r fn_aggregation}
 # TODO: reciprocal ranking
@@ -102,11 +120,13 @@ ranking.
 ensemble_rank =
   function(Y, X, family,
            # Feature ranking algorithms.
-           fn_rank = c(featrank_cor, featrank_randomForest),
+           fn_rank = c(featrank_cor, featrank_randomForest, featrank_glm),
            # Rank aggregation algorithm.
            fn_agg = agg_reciprocal_rank,
            # How many variables we want to select. Top 50% by default.
            top_vars = ceiling(ncol(X) / 2),
+           # Set as TRUE for debugging purposes
+           return_ranking = FALSE,
            # Not used.
            ...)  {
     
@@ -116,6 +136,10 @@ ensemble_rank =
     
     # Calculate the aggregate ranking.
     ranking = fn_agg(rank_df)
+    
+    if (return_ranking) {
+      return(ranking)
+    }
     
     # Apply the ranking to select the top X variables.
     whichVariable <- (ranking <= top_vars)
@@ -130,23 +154,37 @@ featrank_randomForest10 =
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100, ...)
 
-debugonce(ensemble_rank)
-(result = ensemble_rank(y, x, family, fn_rank = c(featrank_cor, featrank_randomForest10)))
+(result = ensemble_rank(y, x, family,
+                        fn_rank = c(featrank_cor, featrank_randomForest10, featrank_glm)))
 
 # Create a custom ensemble rank feature selector, using the RF learner.
 # Also customizing top_vars if desired.
 ensemble_rank_custom =
   function(...) ensemble_rank(fn_rank = c(featrank_cor,
-                                          featrank_randomForest100),
+                                          featrank_randomForest100,
+                                          featrank_glm),
                               # There are 13 total vars so try dropping 1 of them.
                               top_vars = 12,
                               ...)
+```
+
+### Stability assessment
+
+```{r}
+# Check if we see stability across multiple runs,
+# especially for comparison to individual feature ranking algorithms.
+# (See stability scores in Table 3 of paper.)
+results = do.call(rbind.data.frame, lapply(1:10, function(i) ensemble_rank_custom(y, x, family, return_ranking = TRUE)))
+names(results) = names(x)
+# Stability looks excellent.
+results
 ```
 
 ## Test SuperLearner
 
 ```{r test_sl}
 # Seems to work correctly.
+set.seed(1)
 sl = SuperLearner(y, x, family = binomial(),
                   cvControl = list(V = 10L, stratifyCV = TRUE),
                   SL.library =
@@ -154,9 +192,8 @@ sl = SuperLearner(y, x, family = binomial(),
                          # Try two screening options: ensemble_rank_custom or All.
                          c("SL.glm", "ensemble_rank_custom", "All")))
 
-# No AUC benefit, but maybe we need better/more feature rankings. Or this dataset just
-# doesn't have many noise features.
-# Plus we aren't used any complex ML algorithms like xgboost / BART / RF.
+
+# We do achieve a small AUC benefit - schweet.
 ck37r::auc_table(sl, y = y)
 
 # Which feature was dropped in the final SL?
