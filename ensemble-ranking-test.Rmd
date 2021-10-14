@@ -158,7 +158,7 @@ featrank_randomForest100 =
                         fn_rank = c(featrank_cor, featrank_randomForest10, featrank_glm)))
 
 # Create a custom ensemble rank feature selector, using the RF learner.
-# Also customizing top_vars if desired.
+# Also customizing top_vars to drop a single feature.
 ensemble_rank_custom =
   function(...) ensemble_rank(fn_rank = c(featrank_cor,
                                           featrank_randomForest100,
@@ -170,7 +170,7 @@ ensemble_rank_custom =
 
 ### Stability assessment
 
-```{r}
+```{r stability}
 # Check if we see stability across multiple runs,
 # especially for comparison to individual feature ranking algorithms.
 # (See stability scores in Table 3 of paper.)
