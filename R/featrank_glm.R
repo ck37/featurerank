@@ -8,6 +8,6 @@ featrank_glm <- function(Y, X, family, obsWeights = NULL, ...) {
   fit.glm <- glm(Y ~ ., data = X, family = family, weights = obsWeights)
   
   # Extract p-values.
-  p_vals = summary(reg)$coefficients[-1, 4]
+  p_vals = summary(fit.glm)$coefficients[-1, 4]
   return(rank(p_vals))
 }
