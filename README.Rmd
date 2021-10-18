@@ -9,9 +9,20 @@ link-citations: true
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Feature Rank: Ensemble feature ranking for variable selection
+# Feature Rank: ensemble feature ranking for variable selection
 
 We are attempting to implement @effrosynidis2021evaluation's ensemble feature selection method for use in SuperLearner ensembles.
+
+## Install
+
+```{r install, eval = FALSE}
+# install.packages("remotes")
+remotes::install_github("ck37/featurerank")
+```
+
+## Example
+
+A minimal example to demonstrate how the package can be used.
 
 ```{r setup, include=FALSE}
 # We include library() here so that the output is suppressed, and again
@@ -19,8 +30,9 @@ We are attempting to implement @effrosynidis2021evaluation's ensemble feature se
 library(SuperLearner)
 ```
 
-## Prep example
-```{r tests}
+### Prepare dataset
+
+```{r prep_dataset}
 # TODO: switch to a less problematic demo dataset.
 data(Boston, package = "MASS")
 
@@ -31,7 +43,7 @@ family = binomial()
 
 ```
 
-## Create feature ranking library
+### Create feature ranking library
 
 Specify the feature ranking wrapper for the ensemble library.
 
@@ -53,8 +65,7 @@ ensemble_rank_custom =
                               ...)
 ```
 
-
-## Use in SuperLearner
+### Use in SuperLearner
 
 ```{r use_sl}
 library(SuperLearner)

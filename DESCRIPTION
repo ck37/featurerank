@@ -13,6 +13,7 @@ Depends: R (>= 3.1.0)
 Imports: SuperLearner
 Suggests: 
     FSelector,
+    MASS,
     xgboost,
     ranger,
     glmnet,

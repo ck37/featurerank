@@ -1,13 +1,24 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Feature Rank: Ensemble feature ranking for variable selection
+# Feature Rank: ensemble feature ranking for variable selection
 
 We are attempting to implement Effrosynidis and Arampatzis
 ([2021](#ref-effrosynidis2021evaluation))’s ensemble feature selection
 method for use in SuperLearner ensembles.
 
-## Prep example
+## Install
+
+``` r
+# install.packages("remotes")
+remotes::install_github("ck37/featurerank")
+```
+
+## Example
+
+A minimal example to demonstrate how the package can be used.
+
+### Prepare dataset
 
 ``` r
 # TODO: switch to a less problematic demo dataset.
@@ -19,7 +30,7 @@ y = Boston$chas
 family = binomial()
 ```
 
-## Create feature ranking library
+### Create feature ranking library
 
 Specify the feature ranking wrapper for the ensemble library.
 
@@ -41,7 +52,7 @@ ensemble_rank_custom =
                               ...)
 ```
 
-## Use in SuperLearner
+### Use in SuperLearner
 
 ``` r
 library(SuperLearner)
