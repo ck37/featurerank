@@ -3,9 +3,9 @@
 
 # Feature Rank: ensemble feature ranking for variable selection
 
-We are attempting to implement Effrosynidis and Arampatzis
-([2021](#ref-effrosynidis2021evaluation))’s ensemble feature selection
-method for use in SuperLearner ensembles.
+An implementation of ensemble feature ranking for variable selection in
+SuperLearner ensembles, based on Effrosynidis and Arampatzis
+([2021](#ref-effrosynidis2021evaluation)).
 
 ## Install
 
