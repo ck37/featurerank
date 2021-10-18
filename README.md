@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Feature ranking ensemble
+# Feature Rank: Ensemble feature ranking for variable selection
 
 We are attempting to implement Effrosynidis and Arampatzis
 ([2021](#ref-effrosynidis2021evaluation))’s ensemble feature selection
