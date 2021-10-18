@@ -14,8 +14,9 @@ link-citations: true
 We are attempting to implement @effrosynidis2021evaluation's ensemble feature selection method for use in SuperLearner ensembles.
 
 ```{r setup, include=FALSE}
+# We include library() here so that the output is suppressed, and again
+# later in the demo just so people can see it.
 library(SuperLearner)
-library(featurerank)
 ```
 
 ## Prep example
@@ -35,6 +36,8 @@ family = binomial()
 Specify the feature ranking wrapper for the ensemble library.
 
 ```{r create_library}
+library(featurerank)
+
 # Create a custom ensemble rank feature selector, using the RF learner.
 # Also customizing top_vars to drop a single feature.
 
@@ -53,7 +56,9 @@ ensemble_rank_custom =
 
 ## Use in SuperLearner
 
-```{r test_sl}
+```{r use_sl}
+library(SuperLearner)
+
 # Seems to work correctly.
 set.seed(1)
 sl = SuperLearner(y, x, family = binomial(),
@@ -65,7 +70,7 @@ sl = SuperLearner(y, x, family = binomial(),
 
 
 # We do achieve a small AUC benefit.
-ck37r::auc_table(sl, y = y)
+ck37r::auc_table(sl, y = y)[, -6]
 
 # Which feature was dropped in the final SL?
 names(x)[!sl$whichScreen["ensemble_rank_custom", ]]

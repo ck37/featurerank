@@ -24,6 +24,8 @@ family = binomial()
 Specify the feature ranking wrapper for the ensemble library.
 
 ``` r
+library(featurerank)
+
 # Create a custom ensemble rank feature selector, using the RF learner.
 # Also customizing top_vars to drop a single feature.
 
@@ -42,6 +44,8 @@ ensemble_rank_custom =
 ## Use in SuperLearner
 
 ``` r
+library(SuperLearner)
+
 # Seems to work correctly.
 set.seed(1)
 sl = SuperLearner(y, x, family = binomial(),
@@ -58,17 +62,13 @@ sl = SuperLearner(y, x, family = binomial(),
 
 ``` r
 # We do achieve a small AUC benefit.
-ck37r::auc_table(sl, y = y)
+ck37r::auc_table(sl, y = y)[, -6]
 ```
 
     ##                       learner       auc         se  ci_lower  ci_upper
     ## 1                 SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
     ## 3                  SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
     ## 2 SL.glm_ensemble_rank_custom 0.7495789 0.02874162 0.6932464 0.8059114
-    ##       p-value
-    ## 1 0.002178401
-    ## 3 0.407028941
-    ## 2 0.500000000
 
 ``` r
 # Which feature was dropped in the final SL?
