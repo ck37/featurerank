@@ -7,6 +7,8 @@ Authors@R: c(person("Chris", "Kennedy", email = "chrisken@gmail.com",
              person("Maria", "Petukhova",
                   role = c("aut")),
              person("Howard", "Liu",
+                  role = c("aut")),
+             person("Sara", "Moore",
                   role = c("aut")))
 Description: Ensemble feature ranking for variable selection
 Depends: R (>= 3.1.0)

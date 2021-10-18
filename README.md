@@ -4,8 +4,16 @@
 # Feature Rank: ensemble feature ranking for variable selection
 
 Ensemble feature ranking for variable selection in SuperLearner
-ensembles, based on Effrosynidis and Arampatzis
-([2021](#ref-effrosynidis2021evaluation)).
+ensembles ([Polley et al. 2021](#ref-polley2021package)), based on
+Effrosynidis and Arampatzis ([2021](#ref-effrosynidis2021evaluation)).
+Multiple algorithms estimate a ranking of the strength of the
+relationship between predictors and the outcome in the training set, and
+these rankings are combined into a single ranking via an aggregation
+method (reciprocal ranking currently). The final ranking can then be cut
+at a certain number of variables (e.g. top 10 predictors, top 70%, etc.)
+to create one or more feature selection wrappers for SuperLearner. The
+result should generally be more robust and stable than feature selection
+using a single algorithm.
 
 ## Install
 
@@ -146,6 +154,14 @@ results
 Effrosynidis, Dimitrios, and Avi Arampatzis. 2021. “An Evaluation of
 Feature Selection Methods for Environmental Data.” *Ecological
 Informatics* 61: 101224.
+
+</div>
+
+<div id="ref-polley2021package" class="csl-entry">
+
+Polley, Eric, Erin LeDell, Chris J. Kennedy, Sam Lendle, and Mark van
+der Laan. 2021. “SuperLearner: Super Learner Prediction.” CRAN.
+<https://CRAN.R-project.org/package=SuperLearner>.
 
 </div>
 
