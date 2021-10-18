@@ -20,6 +20,13 @@ Ensemble feature ranking for variable selection in SuperLearner ensembles [@poll
 remotes::install_github("ck37/featurerank")
 ```
 
+## Algorithms
+
+Currently implemented algorithms are:
+
+  * Feature ranking: correlation, glm, glmnet, random forest, bart, xgboost + shap, variance
+  * Rank aggregation: reciprocal ranking
+
 ## Example
 
 A minimal example to demonstrate how the package can be used.
@@ -28,6 +35,9 @@ A minimal example to demonstrate how the package can be used.
 # We include library() here so that the output is suppressed, and again
 # later in the demo just so people can see it.
 library(SuperLearner)
+library(glmnet)
+library(embarcadero)
+library(dbarts)
 ```
 
 ### Prepare dataset
@@ -56,13 +66,21 @@ library(featurerank)
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100L, ...)
 
+# Custom library of feature ranking algorithms.
 ensemble_rank_custom =
-  function(...) ensemble_rank(fn_rank = c(featrank_cor,
-                                          featrank_randomForest100,
-                                          featrank_glm),
-                              # There are 13 total vars so try dropping 1 of them.
-                              top_vars = 12,
-                              ...)
+  function(top_vars, ...)
+    ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
+                              featrank_glm, featrank_glmnet,
+                              #featrank_shap, # too verbose currently
+                              featrank_dbarts),
+                  top_vars = top_vars,
+                  ...)
+
+# There are 13 total vars so try dropping 1 of them.
+top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
+
+# Try dropping worst 2 predictors.
+top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
 ```
 
 ### Use in SuperLearner
@@ -76,17 +94,16 @@ sl = SuperLearner(y, x, family = binomial(),
                   cvControl = list(V = 10L, stratifyCV = TRUE),
                   SL.library =
                     list("SL.mean",
-                         # Try two screening options: ensemble_rank_custom or All.
-                         c("SL.glm", "ensemble_rank_custom", "All")))
+                         # Try two ensemble screening options vs. all predictors.
+                         c("SL.glm", "top12", "top11", "All")))
 
 
-# We do achieve a small AUC benefit.
+# We do achieve an AUC benefit.
 ck37r::auc_table(sl, y = y)[, -6]
 
-# Which feature was dropped in the final SL?
-names(x)[!sl$whichScreen["ensemble_rank_custom", ]]
-# Full results:
+# Which features were dropped (will show FALSE below)?
 t(sl$whichScreen)
+
 ```
 
 ### Assess ranking stability
@@ -99,8 +116,8 @@ set.seed(2)
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
-                 function(i) ensemble_rank_custom(y, x, family,
-                                                  return_ranking = TRUE)))
+                 function(i) top12(y, x, family,
+                                   return_ranking = TRUE)))
 names(results) = names(x)
 # Stability looks excellent.
 results

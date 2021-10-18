@@ -22,6 +22,14 @@ using a single algorithm.
 remotes::install_github("ck37/featurerank")
 ```
 
+## Algorithms
+
+Currently implemented algorithms are:
+
+-   Feature ranking: correlation, glm, glmnet, random forest, bart,
+    xgboost + shap, variance
+-   Rank aggregation: reciprocal ranking
+
 ## Example
 
 A minimal example to demonstrate how the package can be used.
@@ -51,13 +59,21 @@ library(featurerank)
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100L, ...)
 
+# Custom library of feature ranking algorithms.
 ensemble_rank_custom =
-  function(...) ensemble_rank(fn_rank = c(featrank_cor,
-                                          featrank_randomForest100,
-                                          featrank_glm),
-                              # There are 13 total vars so try dropping 1 of them.
-                              top_vars = 12,
-                              ...)
+  function(top_vars, ...)
+    ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
+                              featrank_glm, featrank_glmnet,
+                              #featrank_shap, # too verbose currently
+                              featrank_dbarts),
+                  top_vars = top_vars,
+                  ...)
+
+# There are 13 total vars so try dropping 1 of them.
+top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
+
+# Try dropping worst 2 predictors.
+top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
 ```
 
 ### Use in SuperLearner
@@ -71,50 +87,50 @@ sl = SuperLearner(y, x, family = binomial(),
                   cvControl = list(V = 10L, stratifyCV = TRUE),
                   SL.library =
                     list("SL.mean",
-                         # Try two screening options: ensemble_rank_custom or All.
-                         c("SL.glm", "ensemble_rank_custom", "All")))
+                         # Try two ensemble screening options vs. all predictors.
+                         c("SL.glm", "top12", "top11", "All")))
 ```
 
     ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
     ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
 ``` r
-# We do achieve a small AUC benefit.
+# We do achieve an AUC benefit.
 ck37r::auc_table(sl, y = y)[, -6]
 ```
 
-    ##                       learner       auc         se  ci_lower  ci_upper
-    ## 1                 SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
-    ## 3                  SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
-    ## 2 SL.glm_ensemble_rank_custom 0.7495789 0.02874162 0.6932464 0.8059114
+    ##        learner       auc         se  ci_lower  ci_upper
+    ## 1  SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
+    ## 4   SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
+    ## 2 SL.glm_top12 0.7485151 0.02852544 0.6926062 0.8044239
+    ## 3 SL.glm_top11 0.7758200 0.02529943 0.7262341 0.8254060
 
 ``` r
-# Which feature was dropped in the final SL?
-names(x)[!sl$whichScreen["ensemble_rank_custom", ]]
-```
-
-    ## [1] "zn"
-
-``` r
-# Full results:
+# Which features were dropped (will show FALSE below)?
 t(sl$whichScreen)
 ```
 
-    ##          All ensemble_rank_custom
-    ## crim    TRUE                 TRUE
-    ## zn      TRUE                FALSE
-    ## indus   TRUE                 TRUE
-    ## nox     TRUE                 TRUE
-    ## rm      TRUE                 TRUE
-    ## age     TRUE                 TRUE
-    ## dis     TRUE                 TRUE
-    ## rad     TRUE                 TRUE
-    ## tax     TRUE                 TRUE
-    ## ptratio TRUE                 TRUE
-    ## black   TRUE                 TRUE
-    ## lstat   TRUE                 TRUE
-    ## medv    TRUE                 TRUE
+    ##          All top12 top11
+    ## crim    TRUE  TRUE  TRUE
+    ## zn      TRUE FALSE FALSE
+    ## indus   TRUE  TRUE  TRUE
+    ## nox     TRUE  TRUE  TRUE
+    ## rm      TRUE  TRUE  TRUE
+    ## age     TRUE  TRUE  TRUE
+    ## dis     TRUE  TRUE  TRUE
+    ## rad     TRUE  TRUE  TRUE
+    ## tax     TRUE  TRUE  TRUE
+    ## ptratio TRUE  TRUE  TRUE
+    ## black   TRUE  TRUE FALSE
+    ## lstat   TRUE  TRUE  TRUE
+    ## medv    TRUE  TRUE  TRUE
 
 ### Assess ranking stability
 
@@ -126,24 +142,24 @@ set.seed(2)
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
-                 function(i) ensemble_rank_custom(y, x, family,
-                                                  return_ranking = TRUE)))
+                 function(i) top12(y, x, family,
+                                   return_ranking = TRUE)))
 names(results) = names(x)
 # Stability looks excellent.
 results
 ```
 
     ##    crim zn indus nox rm age dis rad tax ptratio black lstat medv
-    ## 1     9 13     8  10  6  11   7   3   5       4    12     2    1
-    ## 2    10 13     9   4  8  11   7   3   6       5    12     2    1
-    ## 3     8 13     7  10  6  11   9   3   5       4    12     2    1
-    ## 4    10 13     8   7  4  11   9   3   6       5    12     2    1
-    ## 5     9 13     8  10  6  11   7   3   5       4    12     2    1
-    ## 6    10 13     9   8  6  11   7   3   5       4    12     2    1
-    ## 7    11 13     8   9  6  10   7   3   5       4    12     2    1
-    ## 8    10 13     8   9  7  11   5   3   6       4    12     2    1
-    ## 9    10 13     8  11  6   9   7   3   5       4    12     2    1
-    ## 10   10 13     8   9  6  11   7   3   5       4    12     2    1
+    ## 1     7 13     3   2  9  11   8   4  10       6    12     5    1
+    ## 2     7 13     5   2  8  11  10   3   9       6    12     4    1
+    ## 3     6 13     4   2 10  11   7   3   9       5    12     8    1
+    ## 4     7 13     6   3  4  11   8   5   9       2    12    10    1
+    ## 5     7 13     6   2  8  11   9   3  10       4    12     5    1
+    ## 6     6 13     9   2  7  11  10   3   8       5    12     4    1
+    ## 7     6 13     7   1  9  11  10   3   8       5    12     4    2
+    ## 8     6 13     8   2 11  10   7   3   9       5    12     4    1
+    ## 9     8 13     6   2  7  11  10   3   9       5    12     4    1
+    ## 10    6 13     7   2  9  11  10   3   8       5    12     4    1
 
 ## References
 
