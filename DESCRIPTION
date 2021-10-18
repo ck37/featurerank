@@ -1,0 +1,14 @@
+Package: featurerank
+Title: Ensemble feature ranking for variable selection
+Version: 0.1
+Authors@R: c(person("Chris", "Kennedy", email = "chrisken@gmail.com",
+                  role = c("aut", "cre"),
+                  comment = c(ORCID = "0000-0001-7444-2766")),
+             person("Maria", "Petukhova",
+                  role = c("aut")),
+             person("Howard", "Liu",
+                  role = c("aut")))
+Description: Ensemble feature ranking for variable selection
+Depends: R (>= 3.1.0)
+License: MIT
+LazyData: true
