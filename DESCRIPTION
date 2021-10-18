@@ -17,6 +17,8 @@ Suggests:
     FSelector,
     MASS,
     xgboost,
+    embarcadero,
+    randomForest,
     ranger,
     glmnet,
     dbarts,

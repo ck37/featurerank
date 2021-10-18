@@ -33,17 +33,18 @@
 #' \url{http://dx.doi.org/10.1023/A:1010933404324}
 #' \url{http://dx.doi.org/10.3414/ME00-01-0052}
 #' @export
-featrank_ranger = function(Y, X, family, obsWeights = NULL,
-                           ties_method = "last",
-                          nTree = 1000,
-                          mTry = ifelse(family$family == "gaussian", floor(sqrt(ncol(X))), max(floor(ncol(X)/3), 1)),
-                          nodeSize = ifelse(family$family == "gaussian", 5, 1),
-                          importanceType = c("permutation", "impurity"),
-                          scalePermutationImportance = TRUE,
-                          probabilityTrees = FALSE,
-                          numThreads = 1,
-                          verbose = FALSE,
-                          ...) {
+featrank_ranger =
+  function(Y, X, family, obsWeights = NULL,
+           ties_method = "last",
+           nTree = 1000,
+           mTry = ifelse(family$family == "gaussian", floor(sqrt(ncol(X))), max(floor(ncol(X)/3), 1)),
+           nodeSize = ifelse(family$family == "gaussian", 5, 1),
+           importanceType = c("permutation", "impurity"),
+           scalePermutationImportance = TRUE,
+           probabilityTrees = FALSE,
+           numThreads = 1,
+           verbose = FALSE,
+           ...) {
   
   importanceType <- match.arg(importanceType)
   selector <- match.arg(selector)

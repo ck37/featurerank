@@ -54,8 +54,9 @@
 # @importFrom xgboost xgboost xgb.cv
 # @examples
 #' @export
-featrank_SHAP =
+featrank_shap =
   function(Y, X, family, obsWeights, id,
+           ties_method = "last",
            ntrees = 5000L,
            early_stopping_rounds = 200L,
            nfold = 5L,
@@ -91,8 +92,9 @@ featrank_SHAP =
       objective = "binary:logistic"
     }
     
-    model_cv =
-      xgboost::xgb.cv(data = xgmat,#
+    capture.output({suppressWarnings({
+      model_cv =
+        xgboost::xgb.cv(data = xgmat,#
                       objective = objective, #
                       nrounds = ntrees,#
                       nfold = nfold,#
@@ -109,12 +111,14 @@ featrank_SHAP =
                       colsample_bytree = colsample_bytree,
                       gamma = gamma)#,
     #save_period = save_period)
+    })})
     
     if (verbose) {
       print(model_cv)
     }
     
     # Refit that model using the best params.
+    suppressWarnings({
     model =
       xgboost::xgboost(data = xgmat,
                        # objective = objective,
@@ -123,6 +127,7 @@ featrank_SHAP =
                        verbose = 0L,
                        print_every_n = 500L,
                        save_period = save_period)
+    })
     
     if (family$family == "multinomial") {
       # Not used yet.
