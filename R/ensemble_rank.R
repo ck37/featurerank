@@ -1,6 +1,7 @@
 #' @export
 ensemble_rank =
   function(Y, X, family,
+           obsWeights = NULL,
            # Feature ranking algorithms.
            fn_rank = c(featrank_cor, featrank_randomForest, featrank_glm),
            # Rank aggregation algorithm.
@@ -15,7 +16,9 @@ ensemble_rank =
     
     # Run each feature ranking algorithm.
     rank_df = do.call(cbind.data.frame,
-                      lapply(fn_rank, function(fn) fn(Y, X, family, ties_method)))
+                      lapply(fn_rank, function(fn) fn(Y, X, family,
+                                                      obsWeights = obsWeights,
+                                                      ties_method = ties_method)))
     
     # Calculate the aggregate ranking.
     ranking = fn_agg(rank_df, ties_method)
