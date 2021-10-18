@@ -48,18 +48,16 @@ family = binomial()
 
 ### Create feature ranking library
 
-Specify the feature ranking wrapper for the ensemble library.
+Specify the feature ranking wrappers for the ensemble library.
 
 ``` r
 library(featurerank)
 
-# Create a custom ensemble rank feature selector, using the RF learner.
-# Also customizing top_vars to drop a single feature.
-
+# Modify RF feature ranker to use 100 trees.
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100L, ...)
 
-# Custom library of feature ranking algorithms.
+# Specify the set of feature ranking algorithms.
 ensemble_rank_custom =
   function(top_vars, ...)
     ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
