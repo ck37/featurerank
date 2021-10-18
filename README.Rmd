@@ -9,7 +9,7 @@ link-citations: true
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Feature ranking ensemble
+# Feature Rank: Ensemble feature ranking for variable selection
 
 We are attempting to implement @effrosynidis2021evaluation's ensemble feature selection method for use in SuperLearner ensembles.
 

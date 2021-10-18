@@ -1,3 +1,4 @@
+#' @export
 ensemble_rank =
   function(Y, X, family,
            # Feature ranking algorithms.

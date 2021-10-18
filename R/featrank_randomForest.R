@@ -1,3 +1,4 @@
+#' @export
 # Edited from screen.randomForest
 featrank_randomForest =  function (Y, X, family, obsWeights = NULL, ties_method = "last", ntree = 1000, mtry = ifelse(family$family == 
     "gaussian", floor(sqrt(ncol(X))), max(floor(ncol(X)/3), 1)), 

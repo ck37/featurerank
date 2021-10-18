@@ -10,5 +10,11 @@ Authors@R: c(person("Chris", "Kennedy", email = "chrisken@gmail.com",
                   role = c("aut")))
 Description: Ensemble feature ranking for variable selection
 Depends: R (>= 3.1.0)
+Imports: SuperLearner
+Suggests: FSelector, xgboost, ranger, glmnet, dbarts
 License: MIT
 LazyData: true
+URL: https://github.com/ck37/featurerank
+BugReports: https://github.com/ck37/featurerank/issues
+Encoding: UTF-8
+RoxygenNote: 7.1.2

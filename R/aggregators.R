@@ -1,3 +1,4 @@
+#' @export
 agg_reciprocal_rank = function(rank_df,
                                ties_method = "last") {
   # For each feature, sum the inverse of its ranks, then invert the sum.
