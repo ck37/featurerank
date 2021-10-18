@@ -11,10 +11,17 @@ Authors@R: c(person("Chris", "Kennedy", email = "chrisken@gmail.com",
 Description: Ensemble feature ranking for variable selection
 Depends: R (>= 3.1.0)
 Imports: SuperLearner
-Suggests: FSelector, xgboost, ranger, glmnet, dbarts
+Suggests: 
+    FSelector,
+    xgboost,
+    ranger,
+    glmnet,
+    dbarts,
+    testthat (>= 3.0.0)
 License: MIT
 LazyData: true
 URL: https://github.com/ck37/featurerank
 BugReports: https://github.com/ck37/featurerank/issues
 Encoding: UTF-8
 RoxygenNote: 7.1.2
+Config/testthat/edition: 3
