@@ -1,4 +1,4 @@
-featrank_glm <- function(Y, X, family, ties_method = "last", obsWeights = NULL, ...) {
+featrank_glm <- function(Y, X, family, obsWeights = NULL, ties_method = "last", ...) {
   
   # X must be a dataframe, not a matrix.
   if (is.matrix(X)) {
