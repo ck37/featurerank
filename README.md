@@ -103,23 +103,28 @@ t(sl$whichScreen)
 # Check if we see stability across multiple runs,
 # especially for comparison to individual feature ranking algorithms.
 # (See stability scores in Table 3 of paper.)
-results = do.call(rbind.data.frame, lapply(1:10, function(i) ensemble_rank_custom(y, x, family, return_ranking = TRUE)))
+set.seed(2)
+results =
+  do.call(rbind.data.frame,
+          lapply(1:10,
+                 function(i) ensemble_rank_custom(y, x, family,
+                                                  return_ranking = TRUE)))
 names(results) = names(x)
 # Stability looks excellent.
 results
 ```
 
     ##    crim zn indus nox rm age dis rad tax ptratio black lstat medv
-    ## 1    10 13     8   7  9  11   5   3   6       4    12     2    1
-    ## 2     9 13     8  10  4  11   7   3   6       5    12     2    1
-    ## 3     9 13     8  10  4  11   7   3   6       5    12     2    1
-    ## 4    10 13     8   7  9  11   4   2   6       3    12     5    1
-    ## 5     9 13     8  10  4  11   6   3   7       5    12     2    1
-    ## 6    10 13     8   9  2  11   7   3   6       4    12     5    1
-    ## 7    10 13     8   9  7  11   5   3   6       4    12     2    1
-    ## 8     9 13     8  10  4  11   7   3   6       5    12     2    1
-    ## 9     9 13     8   5 10  11   7   3   6       4    12     2    1
-    ## 10    9 13     7  10  6  11   8   3   5       4    12     2    1
+    ## 1     9 13     8  10  6  11   7   3   5       4    12     2    1
+    ## 2    10 13     9   4  8  11   7   3   6       5    12     2    1
+    ## 3     8 13     7  10  6  11   9   3   5       4    12     2    1
+    ## 4    10 13     8   7  4  11   9   3   6       5    12     2    1
+    ## 5     9 13     8  10  6  11   7   3   5       4    12     2    1
+    ## 6    10 13     9   8  6  11   7   3   5       4    12     2    1
+    ## 7    11 13     8   9  6  10   7   3   5       4    12     2    1
+    ## 8    10 13     8   9  7  11   5   3   6       4    12     2    1
+    ## 9    10 13     8  11  6   9   7   3   5       4    12     2    1
+    ## 10   10 13     8   9  6  11   7   3   5       4    12     2    1
 
 ## References
 

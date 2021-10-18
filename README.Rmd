@@ -84,7 +84,12 @@ t(sl$whichScreen)
 # Check if we see stability across multiple runs,
 # especially for comparison to individual feature ranking algorithms.
 # (See stability scores in Table 3 of paper.)
-results = do.call(rbind.data.frame, lapply(1:10, function(i) ensemble_rank_custom(y, x, family, return_ranking = TRUE)))
+set.seed(2)
+results =
+  do.call(rbind.data.frame,
+          lapply(1:10,
+                 function(i) ensemble_rank_custom(y, x, family,
+                                                  return_ranking = TRUE)))
 names(results) = names(x)
 # Stability looks excellent.
 results
