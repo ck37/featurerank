@@ -34,6 +34,7 @@
 #' \url{http://dx.doi.org/10.3414/ME00-01-0052}
 #' @export
 featrank_ranger = function(Y, X, family,
+                           ties_method = "last",
                           nTree = 1000,
                           mTry = ifelse(family$family == "gaussian", floor(sqrt(ncol(X))), max(floor(ncol(X)/3), 1)),
                           nodeSize = ifelse(family$family == "gaussian", 5, 1),

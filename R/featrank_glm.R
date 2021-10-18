@@ -1,4 +1,4 @@
-featrank_glm <- function(Y, X, family, obsWeights = NULL, ...) {
+featrank_glm <- function(Y, X, family, ties_method = "last", obsWeights = NULL, ...) {
   
   # X must be a dataframe, not a matrix.
   if (is.matrix(X)) {
@@ -9,5 +9,5 @@ featrank_glm <- function(Y, X, family, obsWeights = NULL, ...) {
   
   # Extract p-values.
   p_vals = summary(fit.glm)$coefficients[-1, 4]
-  return(rank(p_vals))
+  return(rank(p_vals, ties.method = ties_method))
 }
