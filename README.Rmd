@@ -13,6 +13,78 @@ link-citations: true
 
 We are attempting to implement @effrosynidis2021evaluation's ensemble feature selection method for use in SuperLearner ensembles.
 
+```{r setup, include=FALSE}
+library(SuperLearner)
+library(featurerank)
+```
+
+## Prep example
+```{r tests}
+# TODO: switch to a less problematic demo dataset.
+data(Boston, package = "MASS")
+
+# Use "chas" as our outcome variable, which is binary.
+x = subset(Boston, select = -chas)
+y = Boston$chas
+family = binomial()
+
+```
+
+## Create feature ranking library
+
+Specify the feature ranking wrapper for the ensemble library.
+
+```{r create_library}
+# Create a custom ensemble rank feature selector, using the RF learner.
+# Also customizing top_vars to drop a single feature.
+
+featrank_randomForest100 =
+  function(...) featrank_randomForest(ntree = 100L, ...)
+
+ensemble_rank_custom =
+  function(...) ensemble_rank(fn_rank = c(featrank_cor,
+                                          featrank_randomForest100,
+                                          featrank_glm),
+                              # There are 13 total vars so try dropping 1 of them.
+                              top_vars = 12,
+                              ...)
+```
+
+
+## Use in SuperLearner
+
+```{r test_sl}
+# Seems to work correctly.
+set.seed(1)
+sl = SuperLearner(y, x, family = binomial(),
+                  cvControl = list(V = 10L, stratifyCV = TRUE),
+                  SL.library =
+                    list("SL.mean",
+                         # Try two screening options: ensemble_rank_custom or All.
+                         c("SL.glm", "ensemble_rank_custom", "All")))
+
+
+# We do achieve a small AUC benefit.
+ck37r::auc_table(sl, y = y)
+
+# Which feature was dropped in the final SL?
+names(x)[!sl$whichScreen["ensemble_rank_custom", ]]
+# Full results:
+t(sl$whichScreen)
+```
+
+### Assess ranking stability
+
+```{r stability}
+# Check if we see stability across multiple runs,
+# especially for comparison to individual feature ranking algorithms.
+# (See stability scores in Table 3 of paper.)
+results = do.call(rbind.data.frame, lapply(1:10, function(i) ensemble_rank_custom(y, x, family, return_ranking = TRUE)))
+names(results) = names(x)
+# Stability looks excellent.
+results
+```
+
 ## References
 
 <div id="refs"></div>

@@ -7,6 +7,120 @@ We are attempting to implement Effrosynidis and Arampatzis
 ([2021](#ref-effrosynidis2021evaluation))’s ensemble feature selection
 method for use in SuperLearner ensembles.
 
+## Prep example
+
+``` r
+# TODO: switch to a less problematic demo dataset.
+data(Boston, package = "MASS")
+
+# Use "chas" as our outcome variable, which is binary.
+x = subset(Boston, select = -chas)
+y = Boston$chas
+family = binomial()
+```
+
+## Create feature ranking library
+
+Specify the feature ranking wrapper for the ensemble library.
+
+``` r
+# Create a custom ensemble rank feature selector, using the RF learner.
+# Also customizing top_vars to drop a single feature.
+
+featrank_randomForest100 =
+  function(...) featrank_randomForest(ntree = 100L, ...)
+
+ensemble_rank_custom =
+  function(...) ensemble_rank(fn_rank = c(featrank_cor,
+                                          featrank_randomForest100,
+                                          featrank_glm),
+                              # There are 13 total vars so try dropping 1 of them.
+                              top_vars = 12,
+                              ...)
+```
+
+## Use in SuperLearner
+
+``` r
+# Seems to work correctly.
+set.seed(1)
+sl = SuperLearner(y, x, family = binomial(),
+                  cvControl = list(V = 10L, stratifyCV = TRUE),
+                  SL.library =
+                    list("SL.mean",
+                         # Try two screening options: ensemble_rank_custom or All.
+                         c("SL.glm", "ensemble_rank_custom", "All")))
+```
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+``` r
+# We do achieve a small AUC benefit.
+ck37r::auc_table(sl, y = y)
+```
+
+    ##                       learner       auc         se  ci_lower  ci_upper
+    ## 1                 SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
+    ## 3                  SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
+    ## 2 SL.glm_ensemble_rank_custom 0.7495789 0.02874162 0.6932464 0.8059114
+    ##       p-value
+    ## 1 0.002178401
+    ## 3 0.407028941
+    ## 2 0.500000000
+
+``` r
+# Which feature was dropped in the final SL?
+names(x)[!sl$whichScreen["ensemble_rank_custom", ]]
+```
+
+    ## [1] "zn"
+
+``` r
+# Full results:
+t(sl$whichScreen)
+```
+
+    ##          All ensemble_rank_custom
+    ## crim    TRUE                 TRUE
+    ## zn      TRUE                FALSE
+    ## indus   TRUE                 TRUE
+    ## nox     TRUE                 TRUE
+    ## rm      TRUE                 TRUE
+    ## age     TRUE                 TRUE
+    ## dis     TRUE                 TRUE
+    ## rad     TRUE                 TRUE
+    ## tax     TRUE                 TRUE
+    ## ptratio TRUE                 TRUE
+    ## black   TRUE                 TRUE
+    ## lstat   TRUE                 TRUE
+    ## medv    TRUE                 TRUE
+
+### Assess ranking stability
+
+``` r
+# Check if we see stability across multiple runs,
+# especially for comparison to individual feature ranking algorithms.
+# (See stability scores in Table 3 of paper.)
+results = do.call(rbind.data.frame, lapply(1:10, function(i) ensemble_rank_custom(y, x, family, return_ranking = TRUE)))
+names(results) = names(x)
+# Stability looks excellent.
+results
+```
+
+    ##    crim zn indus nox rm age dis rad tax ptratio black lstat medv
+    ## 1    10 13     8   7  9  11   5   3   6       4    12     2    1
+    ## 2     9 13     8  10  4  11   7   3   6       5    12     2    1
+    ## 3     9 13     8  10  4  11   7   3   6       5    12     2    1
+    ## 4    10 13     8   7  9  11   4   2   6       3    12     5    1
+    ## 5     9 13     8  10  4  11   6   3   7       5    12     2    1
+    ## 6    10 13     8   9  2  11   7   3   6       4    12     5    1
+    ## 7    10 13     8   9  7  11   5   3   6       4    12     2    1
+    ## 8     9 13     8  10  4  11   7   3   6       5    12     2    1
+    ## 9     9 13     8   5 10  11   7   3   6       4    12     2    1
+    ## 10    9 13     7  10  6  11   8   3   5       4    12     2    1
+
 ## References
 
 <div id="refs" class="references csl-bib-body hanging-indent">
