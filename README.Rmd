@@ -11,7 +11,7 @@ link-citations: true
 
 # Feature Rank: ensemble feature ranking for variable selection
 
-An implementation of ensemble feature ranking for variable selection in SuperLearner ensembles, based on @effrosynidis2021evaluation.
+Ensemble feature ranking for variable selection in SuperLearner ensembles, based on @effrosynidis2021evaluation.
 
 ## Install
 
