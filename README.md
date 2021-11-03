@@ -61,9 +61,9 @@ featrank_randomForest100 =
 ensemble_rank_custom =
   function(top_vars, ...)
     ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
-                              featrank_glm, featrank_glmnet,
+                              featrank_glm, featrank_glmnet),
                               #featrank_shap, # too verbose currently
-                              featrank_dbarts),
+                              #featrank_dbarts),
                   top_vars = top_vars,
                   ...)
 
@@ -72,6 +72,8 @@ top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
 
 # Try dropping worst 2 predictors.
 top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
+
+top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ```
 
 ### Use in SuperLearner
@@ -86,8 +88,32 @@ sl = SuperLearner(y, x, family = binomial(),
                   SL.library =
                     list("SL.mean",
                          # Try two ensemble screening options vs. all predictors.
-                         c("SL.glm", "top12", "top11", "All")))
+                         c("SL.glm", "top12", "top11", "top10", "All")))
 ```
+
+    ## Loading required namespace: weights
+
+    ## Loading required namespace: randomForest
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
     ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
@@ -106,29 +132,30 @@ ck37r::auc_table(sl, y = y)[, -6]
 
     ##        learner       auc         se  ci_lower  ci_upper
     ## 1  SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
-    ## 4   SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
+    ## 5   SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
     ## 2 SL.glm_top12 0.7485151 0.02852544 0.6926062 0.8044239
-    ## 3 SL.glm_top11 0.7758200 0.02529943 0.7262341 0.8254060
+    ## 3 SL.glm_top11 0.7535018 0.02760091 0.6994050 0.8075986
+    ## 4 SL.glm_top10 0.7613032 0.02585664 0.7106251 0.8119813
 
 ``` r
 # Which features were dropped (will show FALSE below)?
 t(sl$whichScreen)
 ```
 
-    ##          All top12 top11
-    ## crim    TRUE  TRUE  TRUE
-    ## zn      TRUE FALSE FALSE
-    ## indus   TRUE  TRUE  TRUE
-    ## nox     TRUE  TRUE  TRUE
-    ## rm      TRUE  TRUE  TRUE
-    ## age     TRUE  TRUE  TRUE
-    ## dis     TRUE  TRUE  TRUE
-    ## rad     TRUE  TRUE  TRUE
-    ## tax     TRUE  TRUE  TRUE
-    ## ptratio TRUE  TRUE  TRUE
-    ## black   TRUE  TRUE FALSE
-    ## lstat   TRUE  TRUE  TRUE
-    ## medv    TRUE  TRUE  TRUE
+    ##          All top12 top11 top10
+    ## crim    TRUE  TRUE  TRUE FALSE
+    ## zn      TRUE FALSE FALSE FALSE
+    ## indus   TRUE  TRUE  TRUE  TRUE
+    ## nox     TRUE  TRUE  TRUE  TRUE
+    ## rm      TRUE  TRUE  TRUE  TRUE
+    ## age     TRUE  TRUE  TRUE  TRUE
+    ## dis     TRUE  TRUE  TRUE  TRUE
+    ## rad     TRUE  TRUE  TRUE  TRUE
+    ## tax     TRUE  TRUE  TRUE  TRUE
+    ## ptratio TRUE  TRUE  TRUE  TRUE
+    ## black   TRUE  TRUE FALSE FALSE
+    ## lstat   TRUE  TRUE  TRUE  TRUE
+    ## medv    TRUE  TRUE  TRUE  TRUE
 
 ### Assess ranking stability
 
@@ -141,23 +168,35 @@ results =
   do.call(rbind.data.frame,
           lapply(1:10,
                  function(i) top12(y, x, family,
-                                   return_ranking = TRUE)))
+                                   # Default replications is 3 - more replications increases stability.
+                                   replications = 10,
+                                   detailed_results = TRUE)$ranking))
 names(results) = names(x)
 # Stability looks excellent.
 results
 ```
 
     ##    crim zn indus nox rm age dis rad tax ptratio black lstat medv
-    ## 1     7 13     3   2  9  11   8   4  10       6    12     5    1
-    ## 2     7 13     5   2  8  11  10   3   9       6    12     4    1
-    ## 3     6 13     4   2 10  11   7   3   9       5    12     8    1
-    ## 4     7 13     6   3  4  11   8   5   9       2    12    10    1
-    ## 5     7 13     6   2  8  11   9   3  10       4    12     5    1
-    ## 6     6 13     9   2  7  11  10   3   8       5    12     4    1
-    ## 7     6 13     7   1  9  11  10   3   8       5    12     4    2
-    ## 8     6 13     8   2 11  10   7   3   9       5    12     4    1
-    ## 9     8 13     6   2  7  11  10   3   9       5    12     4    1
-    ## 10    6 13     7   2  9  11  10   3   8       5    12     4    1
+    ## 1    11 13     8   5  9  10   6   3   7       4    12     2    1
+    ## 2    11 13     7   4  9  10   8   3   6       5    12     2    1
+    ## 3    11 13     7   4  9  10   6   3   8       5    12     2    1
+    ## 4    11 13     7   4 10   9   6   3   8       5    12     2    1
+    ## 5    11 13    10   4  7   9   6   3   8       5    12     2    1
+    ## 6    11 13     8   4  9   7  10   3   6       5    12     2    1
+    ## 7    11 13     9   5 10   7   6   3   8       4    12     2    1
+    ## 8    11 13     9   4  6  10   7   3   8       5    12     2    1
+    ## 9    11 13    10   4  6   8   7   3   9       5    12     2    1
+    ## 10   11 13     9   4  6   8  10   3   7       5    12     2    1
+
+``` r
+# What if we treated each iteration as its own ranking and then aggregated?
+agg_reciprocal_rank(t(results))
+```
+
+    ##    crim      zn   indus     nox      rm     age     dis     rad     tax ptratio 
+    ##      11      13       9       4       8      10       6       3       7       5 
+    ##   black   lstat    medv 
+    ##      12       2       1
 
 ## References
 

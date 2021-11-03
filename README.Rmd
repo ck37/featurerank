@@ -68,9 +68,9 @@ featrank_randomForest100 =
 ensemble_rank_custom =
   function(top_vars, ...)
     ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
-                              featrank_glm, featrank_glmnet,
+                              featrank_glm, featrank_glmnet),
                               #featrank_shap, # too verbose currently
-                              featrank_dbarts),
+                              #featrank_dbarts),
                   top_vars = top_vars,
                   ...)
 
@@ -79,6 +79,8 @@ top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
 
 # Try dropping worst 2 predictors.
 top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
+
+top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ```
 
 ### Use in SuperLearner
@@ -93,7 +95,7 @@ sl = SuperLearner(y, x, family = binomial(),
                   SL.library =
                     list("SL.mean",
                          # Try two ensemble screening options vs. all predictors.
-                         c("SL.glm", "top12", "top11", "All")))
+                         c("SL.glm", "top12", "top11", "top10", "All")))
 
 
 # We do achieve an AUC benefit.
@@ -115,10 +117,15 @@ results =
   do.call(rbind.data.frame,
           lapply(1:10,
                  function(i) top12(y, x, family,
-                                   return_ranking = TRUE)))
+                                   # Default replications is 3 - more replications increases stability.
+                                   replications = 10,
+                                   detailed_results = TRUE)$ranking))
 names(results) = names(x)
 # Stability looks excellent.
 results
+
+# What if we treated each iteration as its own ranking and then aggregated?
+agg_reciprocal_rank(t(results))
 ```
 
 ## References
