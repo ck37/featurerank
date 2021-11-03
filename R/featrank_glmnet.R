@@ -4,7 +4,7 @@ featrank_glmnet =
            obsWeights = rep(1,length(Y)),
            id = NULL,
            ranking_type = 1,
-           run_type = "nocv",
+           run_type = "cv",
            ties = "last", alpha = 1, nlambda = 100,  ...) {
   SuperLearner:::.SL.require('glmnet')
   
