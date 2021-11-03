@@ -19,7 +19,8 @@ Suggests:
     randomForest,
     glmnet,
     dbarts,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    weights
 License: MIT
 LazyData: true
 URL: https://github.com/ck37/featurerank
