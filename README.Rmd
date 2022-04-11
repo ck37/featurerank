@@ -54,10 +54,8 @@ options("warn" = -1)
 data(Boston, package = "MASS")
 
 # Use "chas" as our outcome variable, which is binary.
-x = subset(Boston, select = -chas)
 y = Boston$chas
-family = binomial()
-
+x = subset(Boston, select = -chas)
 ```
 
 ### Create feature ranking library
@@ -131,7 +129,7 @@ system.time({
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
-                 function(i) top12(y, x, family,
+                 function(i) top12(y, x, family = binomial(),
                                    # Default replications is 3 - more replications increases stability.
                                    replications = 10,
                                    detailed_results = TRUE)$ranking))

@@ -42,9 +42,8 @@ A minimal example to demonstrate how the package can be used.
 data(Boston, package = "MASS")
 
 # Use "chas" as our outcome variable, which is binary.
-x = subset(Boston, select = -chas)
 y = Boston$chas
-family = binomial()
+x = subset(Boston, select = -chas)
 ```
 
 ### Create feature ranking library
@@ -99,7 +98,7 @@ sl$times$everything
 ```
 
     ##    user  system elapsed 
-    ##  90.609   0.649  91.550
+    ##  90.393   0.637  91.407
 
 ``` r
 # We do achieve a modest AUC benefit.
@@ -145,7 +144,7 @@ system.time({
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
-                 function(i) top12(y, x, family,
+                 function(i) top12(y, x, family = binomial(),
                                    # Default replications is 3 - more replications increases stability.
                                    replications = 10,
                                    detailed_results = TRUE)$ranking))
@@ -153,7 +152,7 @@ results =
 ```
 
     ##    user  system elapsed 
-    ##  90.818   0.661  91.794
+    ##  90.368   0.648  91.309
 
 ``` r
 names(results) = names(x)
