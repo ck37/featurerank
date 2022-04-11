@@ -13,7 +13,8 @@ method (reciprocal ranking currently). The final ranking can then be cut
 at a certain number of variables (e.g. top 10 predictors, top 70%, etc.)
 to create one or more feature selection wrappers for SuperLearner. The
 result should generally be more robust and stable than feature selection
-using a single algorithm.
+using a single algorithm. See also ([Neumann, Genze, and Heider
+2017](#ref-neumann2017efs)) for a similar method.
 
 ## Install
 
@@ -53,7 +54,7 @@ Specify the feature ranking wrappers for the ensemble library.
 ``` r
 library(featurerank)
 
-# Modify RF feature ranker to use 100 trees.
+# Modify RF feature ranker to use 100 trees (faster than default of 500).
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100L, ...)
 
@@ -63,7 +64,7 @@ ensemble_rank_custom =
     ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
                               featrank_glm, featrank_glmnet),
                               #featrank_shap, # too verbose currently
-                              #featrank_dbarts),
+                              #featrank_dbarts), # skip for speed
                   top_vars = top_vars,
                   ...)
 
@@ -73,6 +74,7 @@ top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
 # Try dropping worst 2 predictors.
 top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
 
+# Drop worst 3 predictors.
 top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ```
 
@@ -81,58 +83,31 @@ top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ``` r
 library(SuperLearner)
 
-# Seems to work correctly.
 set.seed(1)
+# Takes 93 seconds with 1 core.
 sl = SuperLearner(y, x, family = binomial(),
+                  # 10-fold cross-validation stratified on the outcome.
                   cvControl = list(V = 10L, stratifyCV = TRUE),
                   SL.library =
-                    list("SL.mean",
-                         # Try two ensemble screening options vs. all predictors.
-                         c("SL.glm", "top12", "top11", "top10", "All")))
+                    list("SL.glm", # Baseline estimator uses all predictors.
+                         # Try three ensemble screening options, giving the
+                         # screened variable list to logistic regression (SL.glm).
+                         c("SL.glm", "top12", "top11", "top10")))
+
+# Review timing.
+sl$times$everything
 ```
 
-    ## Loading required namespace: weights
-
-    ## Loading required namespace: randomForest
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ##    user  system elapsed 
+    ##  90.609   0.649  91.550
 
 ``` r
-# We do achieve an AUC benefit.
+# We do achieve a modest AUC benefit.
 ck37r::auc_table(sl, y = y)[, -6]
 ```
 
     ##        learner       auc         se  ci_lower  ci_upper
-    ## 1  SL.mean_All 0.5000000 0.08753770 0.3284293 0.6715707
-    ## 5   SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
+    ## 1   SL.glm_All 0.7426862 0.02930653 0.6852464 0.8001259
     ## 2 SL.glm_top12 0.7485151 0.02852544 0.6926062 0.8044239
     ## 3 SL.glm_top11 0.7535018 0.02760091 0.6994050 0.8075986
     ## 4 SL.glm_top10 0.7613032 0.02585664 0.7106251 0.8119813
@@ -164,6 +139,9 @@ t(sl$whichScreen)
 # especially for comparison to individual feature ranking algorithms.
 # (See stability scores in Table 3 of paper.)
 set.seed(2)
+
+# Takes about 90 seconds using 1 core.
+system.time({
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
@@ -171,6 +149,13 @@ results =
                                    # Default replications is 3 - more replications increases stability.
                                    replications = 10,
                                    detailed_results = TRUE)$ranking))
+})
+```
+
+    ##    user  system elapsed 
+    ##  90.818   0.661  91.794
+
+``` r
 names(results) = names(x)
 # Stability looks excellent.
 results
@@ -207,6 +192,14 @@ agg_reciprocal_rank(t(results))
 Effrosynidis, Dimitrios, and Avi Arampatzis. 2021. “An Evaluation of
 Feature Selection Methods for Environmental Data.” *Ecological
 Informatics* 61: 101224.
+
+</div>
+
+<div id="ref-neumann2017efs" class="csl-entry">
+
+Neumann, Ursula, Nikita Genze, and Dominik Heider. 2017. “EFS: An
+Ensemble Feature Selection Tool Implemented as r-Package and
+Web-Application.” *BioData Mining* 10 (1): 1–9.
 
 </div>
 

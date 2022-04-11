@@ -11,7 +11,7 @@ link-citations: true
 
 # Feature Rank: ensemble feature ranking for variable selection
 
-Ensemble feature ranking for variable selection in SuperLearner ensembles [@polley2021package], based on @effrosynidis2021evaluation. Multiple algorithms estimate a ranking of the strength of the relationship between predictors and the outcome in the training set, and these rankings are combined into a single ranking via an aggregation method (reciprocal ranking currently). The final ranking can then be cut at a certain number of variables (e.g. top 10 predictors, top 70%, etc.) to create one or more feature selection wrappers for SuperLearner. The result should generally be more robust and stable than feature selection using a single algorithm.
+Ensemble feature ranking for variable selection in SuperLearner ensembles [@polley2021package], based on @effrosynidis2021evaluation. Multiple algorithms estimate a ranking of the strength of the relationship between predictors and the outcome in the training set, and these rankings are combined into a single ranking via an aggregation method (reciprocal ranking currently). The final ranking can then be cut at a certain number of variables (e.g. top 10 predictors, top 70%, etc.) to create one or more feature selection wrappers for SuperLearner. The result should generally be more robust and stable than feature selection using a single algorithm. See also [@neumann2017efs] for a similar method.
 
 ## Install
 
@@ -36,8 +36,15 @@ A minimal example to demonstrate how the package can be used.
 # later in the demo just so people can see it.
 library(SuperLearner)
 library(glmnet)
+# https://github.com/cjcarlson/embarcadero
 library(embarcadero)
 library(dbarts)
+library(weights)
+library(randomForest)
+library(ck37r)
+
+# Ignore warnings, e.g. from glm().
+options("warn" = -1)
 ```
 
 ### Prepare dataset
@@ -60,7 +67,7 @@ Specify the feature ranking wrappers for the ensemble library.
 ```{r create_library}
 library(featurerank)
 
-# Modify RF feature ranker to use 100 trees.
+# Modify RF feature ranker to use 100 trees (faster than default of 500).
 featrank_randomForest100 =
   function(...) featrank_randomForest(ntree = 100L, ...)
 
@@ -70,7 +77,7 @@ ensemble_rank_custom =
     ensemble_rank(fn_rank = c(featrank_cor, featrank_randomForest100,
                               featrank_glm, featrank_glmnet),
                               #featrank_shap, # too verbose currently
-                              #featrank_dbarts),
+                              #featrank_dbarts), # skip for speed
                   top_vars = top_vars,
                   ...)
 
@@ -80,6 +87,7 @@ top12 = function(...) ensemble_rank_custom(top_vars = 12, ...)
 # Try dropping worst 2 predictors.
 top11 = function(...) ensemble_rank_custom(top_vars = 11, ...)
 
+# Drop worst 3 predictors.
 top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ```
 
@@ -88,17 +96,21 @@ top10 = function(...) ensemble_rank_custom(top_vars = 10, ...)
 ```{r use_sl}
 library(SuperLearner)
 
-# Seems to work correctly.
 set.seed(1)
+# Takes 93 seconds with 1 core.
 sl = SuperLearner(y, x, family = binomial(),
+                  # 10-fold cross-validation stratified on the outcome.
                   cvControl = list(V = 10L, stratifyCV = TRUE),
                   SL.library =
-                    list("SL.mean",
-                         # Try two ensemble screening options vs. all predictors.
-                         c("SL.glm", "top12", "top11", "top10", "All")))
+                    list("SL.glm", # Baseline estimator uses all predictors.
+                         # Try three ensemble screening options, giving the
+                         # screened variable list to logistic regression (SL.glm).
+                         c("SL.glm", "top12", "top11", "top10")))
 
+# Review timing.
+sl$times$everything
 
-# We do achieve an AUC benefit.
+# We do achieve a modest AUC benefit.
 ck37r::auc_table(sl, y = y)[, -6]
 
 # Which features were dropped (will show FALSE below)?
@@ -113,6 +125,9 @@ t(sl$whichScreen)
 # especially for comparison to individual feature ranking algorithms.
 # (See stability scores in Table 3 of paper.)
 set.seed(2)
+
+# Takes about 90 seconds using 1 core.
+system.time({
 results =
   do.call(rbind.data.frame,
           lapply(1:10,
@@ -120,6 +135,8 @@ results =
                                    # Default replications is 3 - more replications increases stability.
                                    replications = 10,
                                    detailed_results = TRUE)$ranking))
+})
+
 names(results) = names(x)
 # Stability looks excellent.
 results
