@@ -6,7 +6,7 @@ featrank_glm <- function(Y, X, family, obsWeights = NULL, ties_method = "last", 
     X = as.data.frame(X)
   }
   
-  fit.glm <- glm(Y ~ ., data = X, family = family, weights = obsWeights)
+  fit.glm <- suppressWarnings(glm(Y ~ ., data = X, family = family, weights = obsWeights))
   
   # Extract p-values.
   p_vals = summary(fit.glm)$coefficients[-1, 4]

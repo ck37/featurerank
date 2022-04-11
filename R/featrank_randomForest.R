@@ -1,7 +1,7 @@
 #' @export
 # Edited from screen.randomForest
 featrank_randomForest =
-  function (Y, X, family, obsWeights = NULL,
+  function (Y, X, family, obsWeights = NULL, id = NULL,
             ties_method = "last",
             ntree = 1000,
             mtry = ifelse(family$family ==  "gaussian",

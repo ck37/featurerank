@@ -1,10 +1,10 @@
 #' @export
 featrank_dbarts =
-  function(Y, X, family, obsWeights,
+  function(Y, X, family, obsWeights = NULL, id = NULL,
            ties_method = "last",
            ntree = 50,
            verbose = FALSE,
-           ..)  {
+           ...)  {
   SuperLearner:::.SL.require("dbarts")
   SuperLearner:::.SL.require("embarcadero")
   
